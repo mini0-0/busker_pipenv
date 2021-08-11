@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block page_title %}{{broadcast.name}}{% endblock page_title %}
+
+{% block content %}
+
+<div class="container w-4/5 mx-auto">
+    <div class="flex flex-row mt-12 mb-8">
+        <div class="w-3/4 h-75vh rounded-md bg-busker-navy bg-cover bg-center flex flex-col justify-center items-center" style="background-image: url(https://images.unsplash.com/photo-1453090927415-5f45085b65c0?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&);">
+            <i class="fas fa-play text-7xl mb-5 hover:opacity-80"></i>
+        </div>
+        <div class="w-1/4 h-75vh bg-gray-100 ml-4 rounded-md"> 
+            <textarea id="chat-log" cols="25" rows="18"></textarea><br/>
+            <input id="msg" type="text" size="10">
+            <input id="btn-send-msg"type="button"  size ="3" value="Send"/>
+    
+        </div>
+    </div>
+    <div>
+        <div class="flex justify-between mb-1">
+            <span class="font-bold text-3xl">{{broadcast.name}}</span>
+            <div>
+                {% if broadcast.host == user %}
+                    <a href="{% url 'broadcasts:update' pk=broadcast.pk %}" class="btn bg-yellow-400 rounded-full px-3 text-sm ml-3">내 채널 수정하기</a>
+                {% endif %}
+                <a href="#"><span class="btn bg-indigo-400 rounded-full px-3 text-sm ml-3">화질설정</span></a>
+                <a href="#"><span class="btn bg-indigo-400 rounded-full px-3 text-sm ml-3">구독</span></a>
+                <a href="#"><span class="btn bg-indigo-400 rounded-full px-3 text-sm ml-3">후원하기</span></a>
+                <a href="#"><span class="btn bg-indigo-400 rounded-full px-3 text-sm ml-3">스튜디오</span></a>
+            </div>
+        </div>
+        <div class="border-b border-gray-200 pb-8 mb-32">
+            <div class="flex items-center mb-3">
+                <span class="font-semibold text-lg">{{broadcast.host.nickname}}</span>
+                <div class="border-r h-4 border-white ml-3"></div>
+                <span>
+                    {% for g in broadcast.genres.all %}                                
+                        <span class="text-lg ml-3">{{g}}</span>                                                                         
+                    {% endfor %}
+                </span>
+            </div>
+            <span class="text-lg">{{broadcast.desc}}</span>
+        </div>
+        
+        <div class="flex flex-row flex-wrap mb-24">
+            {% for on_air in broadcast.get_on_airs.all %}
+                <div class="w-1/5 pb-2 px-2">
+                    <a href="{% url 'broadcasts:detail' on_air.pk %}">
+                        {% if on_air.image.url %}
+                            <div class="w-full h-56 rounded-3xl mb-2 bg-gray-100 bg-cover bg-center" style="background-image: url({{on_air.image.url}});">
+                        {% else %}
+                            <div class="w-full h-56 rounded-3xl mb-2 bg-gray-100 bg-cover bg-center" style="background-image: url(/media/broadcast_images/no_image.png);">
+                        {% endif %}
+                            <div class="w-full h-56 rounded-3xl bg-black bg-opacity-40 flex items-end px-3 pb-3">
+                                <div class="w-full flex flex-col">
+                                    <span class="text-lg mb-px overflow-hidden">{{ on_air.name }}</span>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs mb-px">{{on_air.host.nickname}}</span>
+                                        <div class="m-0 p-0 flex items-center">
+                                        {% for g in on_air.genres.all %}                           
+                                            <span class="text-xs mb-px ml-2">{{g}}</span>                                                                         
+                                        {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+    var chatSocket = new WebSocket( 'ws://'+window.location.host + '/broadcasts/1' );
+
+    chatSocket.onmessage = function(e) {
+        var data = JSON.parse(e.data);
+        var message = data['message'];
+        document.querySelector('#chat-log').value += (message + '\n');
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    document.querySelector('#msg').focus();
+    document.querySelector('#msg').onkeyup = function(e) {
+        if (e.keyCode === 13) {  // enter, return
+            document.querySelector('#btn-send-msg').click();
+        }
+    };
+
+    document.querySelector('#btn-send-msg').onclick = function(e) {
+        var messageInputDom = document.querySelector('#msg');
+        var message = messageInputDom.value;
+        chatSocket.send(JSON.stringify({
+            'message': message
+        }));
+
+        messageInputDom.value = '';
+    };
+</script>
+{% endblock %}

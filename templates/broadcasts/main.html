@@ -41,7 +41,7 @@
 
 <script type="text/javascript" src="{% static 'js/main.js' %}"></script>
 <script>
-    var chatSocket = new WebSocket( 'ws://' +window.location.host + '/broadcasts/main' );
+    var chatSocket = new WebSocket( 'ws://'+window.location.host + '/broadcasts/main' );
 
     chatSocket.onmessage = function(e) {
         var data = JSON.parse(e.data);
@@ -71,5 +71,6 @@
     };
 </script>
 
+</body>
 </body>
 </html>
